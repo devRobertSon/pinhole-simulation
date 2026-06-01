@@ -125,7 +125,8 @@ const STROKE_SHAPES = new Set(["ga", "F"]);
 function paintShape(ctx, type, size) {
   if (STROKE_SHAPES.has(type)) {
     ctx.strokeStyle = ctx.fillStyle;
-    ctx.lineWidth = Math.max(1, size * 0.05); // 한 변의 5% → 사실상 두께 없음
+    // 한 변의 약 1.5% → 두께 0인 선으로 간주. 상의 굵기·끝모양은 오직 구멍에서 나옴.
+    ctx.lineWidth = Math.max(1, size * 0.015);
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
     drawShapePath(ctx, type, size);
