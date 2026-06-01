@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>바늘구멍(핀홀) 상 시뮬레이터</title>
+  <meta name="description" content="광원·구멍·스크린의 거리와 모양을 바꿔가며 핀홀 상의 뒤집힘·배율·번짐을 실시간으로 관찰하는 교육용 시뮬레이터" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>🔭 바늘구멍(핀홀) 상 시뮬레이터</h1>
+    <p class="subtitle">
+      광원 → 구멍 → 스크린. 거리·구멍 크기·모양을 바꾸면 상이 어떻게 <b>뒤집히고</b>,
+      <b>커지거나 작아지고</b>, <b>번지는지</b> 살펴보세요.
+    </p>
+  </header>
+
+  <main class="layout">
+    <!-- ===================== 컨트롤 패널 ===================== -->
+    <section class="panel controls" aria-label="조절 컨트롤">
+      <h2>조절판</h2>
+
+      <div class="control">
+        <label for="do">광원–구멍 거리 <span class="badge" id="doVal">50 cm</span></label>
+        <input type="range" id="do" min="5" max="500" step="1" value="50" />
+        <label class="checkrow">
+          <input type="checkbox" id="farSource" />
+          <span>광원을 매우 멀리 (평행광 ≈ 무한대)</span>
+        </label>
+      </div>
+
+      <div class="control">
+        <label for="di">구멍–스크린 거리 <span class="badge" id="diVal">50 cm</span></label>
+        <input type="range" id="di" min="5" max="300" step="1" value="50" />
+      </div>
+
+      <div class="control">
+        <label for="hole">구멍 크기(지름/한 변) <span class="badge" id="holeVal">0.5 cm</span></label>
+        <input type="range" id="hole" min="0.1" max="10" step="0.1" value="0.5" />
+      </div>
+
+      <div class="control">
+        <label for="srcSize">광원 크기 <span class="badge" id="srcSizeVal">10 cm</span></label>
+        <input type="range" id="srcSize" min="1" max="40" step="0.5" value="10" />
+      </div>
+
+      <div class="control">
+        <label for="srcShape">광원 모양</label>
+        <select id="srcShape">
+          <option value="ga">ㄱ 자</option>
+          <option value="arrow" selected>화살표 ↑</option>
+          <option value="F">글자 F</option>
+          <option value="triangle">삼각형 ▲</option>
+          <option value="cross">십자 ✚</option>
+          <option value="dot">점 ●</option>
+          <option value="custom">직접 그리기 ✏️</option>
+        </select>
+        <div id="drawWrap" class="draw-wrap" hidden>
+          <canvas id="drawPad" width="120" height="120" aria-label="광원 직접 그리기"></canvas>
+          <button type="button" id="clearDraw" class="btn-small">지우기</button>
+          <p class="hint">위 칸에 손가락/마우스로 그려 보세요.</p>
+        </div>
+      </div>
+
+      <div class="control">
+        <label for="holeShape">구멍 모양</label>
+        <select id="holeShape">
+          <option value="circle" selected>원 ●</option>
+          <option value="square">정사각형 ■</option>
+          <option value="triangle">삼각형 ▲</option>
+          <option value="star">별 ★</option>
+          <option value="slit">가는 슬릿 ▮</option>
+          <option value="cross">십자 ✚</option>
+        </select>
+      </div>
+
+      <div class="control toggles">
+        <label class="checkrow">
+          <input type="checkbox" id="showGrid" checked />
+          <span>눈금(cm) 격자 표시</span>
+        </label>
+      </div>
+
+      <details class="preset-box">
+        <summary>핵심 현상 빠른 보기 (프리셋)</summary>
+        <div class="presets">
+          <button type="button" data-preset="equal">① 배율 1배 (뒤집힘)</button>
+          <button type="button" data-preset="blur">② 구멍 크게 → 번짐</button>
+          <button type="button" data-preset="far">③ 광원 멀리 → 구멍 모양</button>
+          <button type="button" data-preset="shape">④ 구멍 모양 따라 번짐</button>
+        </div>
+      </details>
+    </section>
+
+    <!-- ===================== 시각화 ===================== -->
+    <section class="viz">
+      <div class="panel viz-card">
+        <h2>장치 모식도</h2>
+        <canvas id="diagram" width="520" height="360"></canvas>
+        <p class="caption">대표 광선이 구멍에서 교차하며 상이 <b>위아래·좌우로 뒤집힙니다</b>.</p>
+      </div>
+
+      <div class="panel viz-card">
+        <h2>스크린에 맺힌 상</h2>
+        <canvas id="screen" width="440" height="440"></canvas>
+        <div class="readout" id="readout"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>
+      물리 모델: 배율 <b>m = d<sub>i</sub> / d<sub>o</sub></b>,
+      번짐 배율 <b>s = 1 + d<sub>i</sub> / d<sub>o</sub></b>.
+      스크린 상 = (m배·반전한 광원) ⊛ (s배 확대한 구멍 모양)의 합성곱.
+    </p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
