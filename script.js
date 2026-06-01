@@ -74,24 +74,23 @@ function drawShapePath(ctx, type, size) {
     case "star":
       starPath(ctx, 0, 0, h, h * 0.42, 5);
       break;
-    case "arrow": { // 위쪽 화살표 ↑
-      ctx.moveTo(0, -h);                 // 머리 꼭짓점
-      ctx.lineTo(h * 0.55, -h * 0.1);
-      ctx.lineTo(h * 0.2, -h * 0.1);
-      ctx.lineTo(h * 0.2, h);            // 몸통 오른쪽
-      ctx.lineTo(-h * 0.2, h);
-      ctx.lineTo(-h * 0.2, -h * 0.1);
-      ctx.lineTo(-h * 0.55, -h * 0.1);
-      ctx.closePath();
-      break;
-    }
-    case "ga": { // ㄱ : 위 가로획 + 오른쪽 세로획 (가는 선)
+    // ㄱ·F·화살표·십자를 '광원'으로 쓸 때의 가는 선 버전은 drawLinePath 참조
+    default:
+      ctx.arc(0, 0, h, 0, Math.PI * 2);
+  }
+}
+
+// 두께 0인 '선'으로 그리는 광원 모양 (ㄱ, F, 화살표, 십자)
+function drawLinePath(ctx, type, size) {
+  const h = size / 2;
+  ctx.beginPath();
+  switch (type) {
+    case "ga": // ㄱ : 위 가로획 + 오른쪽 세로획
       ctx.moveTo(-h * 0.78, -h * 0.78);
       ctx.lineTo(h * 0.78, -h * 0.78);
       ctx.lineTo(h * 0.78, h * 0.78);
       break;
-    }
-    case "F": { // 가는 선으로 그린 F
+    case "F":
       ctx.moveTo(-h * 0.6, -h * 0.9);
       ctx.lineTo(-h * 0.6, h * 0.9);   // 세로 기둥(왼쪽)
       ctx.moveTo(-h * 0.6, -h * 0.85);
@@ -99,9 +98,19 @@ function drawShapePath(ctx, type, size) {
       ctx.moveTo(-h * 0.6, -h * 0.02);
       ctx.lineTo(h * 0.35, -h * 0.02); // 가운데 가로획
       break;
-    }
-    default:
-      ctx.arc(0, 0, h, 0, Math.PI * 2);
+    case "cross": // 십자 + : 가로선 + 세로선
+      ctx.moveTo(-h * 0.9, 0);
+      ctx.lineTo(h * 0.9, 0);
+      ctx.moveTo(0, -h * 0.9);
+      ctx.lineTo(0, h * 0.9);
+      break;
+    case "arrow": // 위쪽 화살표 ↑ : 세로축 + 머리 V
+      ctx.moveTo(0, h);                 // 아래 끝
+      ctx.lineTo(0, -h);                // 위 끝(머리 꼭짓점)
+      ctx.moveTo(-h * 0.45, -h * 0.45); // 머리 왼쪽 날개
+      ctx.lineTo(0, -h);
+      ctx.lineTo(h * 0.45, -h * 0.45);  // 머리 오른쪽 날개
+      break;
   }
 }
 
@@ -117,19 +126,20 @@ function starPath(ctx, cx, cy, rOut, rIn, points) {
   ctx.closePath();
 }
 
-// 두께를 무시할 만큼 가는 '선'으로 그리는 모양 (광원이 선이라고 가정)
-const STROKE_SHAPES = new Set(["ga", "F"]);
+// 광원으로 쓸 때 '두께 없는 선'으로 그리는 모양들
+const LINE_SHAPES = new Set(["ga", "F", "arrow", "cross"]);
 
-// 모양을 칠한다: 선 모양은 가는 선으로 stroke, 나머지는 fill.
+// 모양을 칠한다. asLine=true면 가는 선(stroke), 아니면 채움(fill).
+// 같은 'cross'라도 광원이면 선, 구멍이면 채워진 구멍으로 다르게 그린다.
 // 현재 ctx.fillStyle 색을 그대로 사용한다.
-function paintShape(ctx, type, size) {
-  if (STROKE_SHAPES.has(type)) {
+function paintShape(ctx, type, size, asLine) {
+  if (asLine) {
     ctx.strokeStyle = ctx.fillStyle;
     // 한 변의 약 1.5% → 두께 0인 선으로 간주. 상의 굵기·끝모양은 오직 구멍에서 나옴.
     ctx.lineWidth = Math.max(1, size * 0.015);
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
-    drawShapePath(ctx, type, size);
+    drawLinePath(ctx, type, size);
     ctx.stroke();
   } else {
     drawShapePath(ctx, type, size);
@@ -137,8 +147,9 @@ function paintShape(ctx, type, size) {
   }
 }
 
-// 채워진 스프라이트 캔버스 생성 (흰색). flip=true면 180° 회전(상하좌우 반전).
-function makeSprite(type, extentPx, flip) {
+// 스프라이트 캔버스 생성 (흰색). flip=true면 180° 회전(상하좌우 반전).
+// asLine=true면 두께 없는 선으로 그림(광원이 선 모양일 때).
+function makeSprite(type, extentPx, flip, asLine) {
   const pad = 2;
   const sz = Math.max(2, Math.ceil(extentPx));
   const c = document.createElement("canvas");
@@ -152,7 +163,7 @@ function makeSprite(type, extentPx, flip) {
   if (type === "custom") {
     drawCustomSprite(ctx, sz);
   } else {
-    paintShape(ctx, type, sz);
+    paintShape(ctx, type, sz, asLine);
   }
   ctx.restore();
   return c;
@@ -169,7 +180,7 @@ function drawCustomSprite(ctx, sz) {
  *   extentPx : 실제 화면에서 이 모양이 차지할 픽셀 크기
  *   flip     : true면 좌표 반전(광원 상 반전용)
  * ===================================================================== */
-function sampleShape(type, extentPx, flip) {
+function sampleShape(type, extentPx, flip, asLine) {
   const K = Math.min(48, Math.max(9, Math.round(extentPx)));
   const c = document.createElement("canvas");
   c.width = c.height = K;
@@ -180,7 +191,7 @@ function sampleShape(type, extentPx, flip) {
   } else {
     ctx.save();
     ctx.translate(K / 2, K / 2);
-    paintShape(ctx, type, K);
+    paintShape(ctx, type, K, asLine);
     ctx.restore();
   }
   const data = ctx.getImageData(0, 0, K, K).data;
@@ -243,15 +254,16 @@ function render() {
   accCtx.globalCompositeOperation = "lighter";
 
   const cx = N / 2;
+  const srcIsLine = LINE_SHAPES.has(st.srcShape); // 광원이 선 모양인가 (구멍은 항상 채움)
   let samples, sprite;
   if (sourceFootPx >= holeKernPx) {
     // 광원 상이 더 큼 → 광원을 연속 스프라이트, 구멍을 샘플
-    sprite = makeSprite(st.srcShape, sourceFootPx, true);
-    samples = sampleShape(st.holeShape, holeKernPx, false);
+    sprite = makeSprite(st.srcShape, sourceFootPx, true, srcIsLine);
+    samples = sampleShape(st.holeShape, holeKernPx, false, false);
   } else {
     // 번짐이 더 큼 → 구멍을 연속 스프라이트, 광원을 샘플(반전)
-    sprite = makeSprite(st.holeShape, holeKernPx, false);
-    samples = sampleShape(st.srcShape, sourceFootPx, true);
+    sprite = makeSprite(st.holeShape, holeKernPx, false, false);
+    samples = sampleShape(st.srcShape, sourceFootPx, true, srcIsLine);
   }
 
   const half = sprite.width / 2;
@@ -379,10 +391,12 @@ function drawDiagram(st, m) {
   label(ctx, "구멍", holeX, cy + H * 0.42 + 16, "#7f8bbf");
 
   // --- 광원(화살표/모양) ---
+  const dType = st.srcShape === "custom" ? "arrow" : st.srcShape;
+  const dLine = LINE_SHAPES.has(dType);
   ctx.save();
   ctx.translate(srcX, cy);
   ctx.fillStyle = "#ffd166";
-  paintShape(ctx, st.srcShape === "custom" ? "arrow" : st.srcShape, srcH);
+  paintShape(ctx, dType, srcH, dLine);
   ctx.restore();
   label(ctx, st.farSource ? "광원(아주 멀리)" : "광원", srcX, cy + H * 0.42 + 16, "#ffd166");
 
@@ -391,7 +405,7 @@ function drawDiagram(st, m) {
   ctx.translate(scrX, cy);
   ctx.scale(-1, -1); // 반전
   ctx.fillStyle = "rgba(110,168,255,0.85)";
-  paintShape(ctx, st.srcShape === "custom" ? "arrow" : st.srcShape, imgH);
+  paintShape(ctx, dType, imgH, dLine);
   ctx.restore();
   label(ctx, "상(거꾸로)", scrX, cy - H * 0.42 - 8, "#6ea8ff");
 
