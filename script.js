@@ -85,16 +85,19 @@ function drawShapePath(ctx, type, size) {
       ctx.closePath();
       break;
     }
-    case "ga": { // ㄱ : 위 가로획 + 오른쪽 세로획
-      ctx.rect(-h * 0.9, -h * 0.9, size * 0.9, size * 0.26);  // 가로획(위)
-      ctx.rect(h * 0.4, -h * 0.9, size * 0.26, size * 0.9);    // 세로획(오른쪽, 아래로)
+    case "ga": { // ㄱ : 위 가로획 + 오른쪽 세로획 (가는 선)
+      ctx.moveTo(-h * 0.78, -h * 0.78);
+      ctx.lineTo(h * 0.78, -h * 0.78);
+      ctx.lineTo(h * 0.78, h * 0.78);
       break;
     }
-    case "F": {
-      const w = size * 0.26;
-      ctx.rect(-h * 0.85, -h, w, size);                 // 세로 기둥(왼쪽)
-      ctx.rect(-h * 0.85, -h, size * 0.85, h * 0.46);    // 위 가로획
-      ctx.rect(-h * 0.85, -h * 0.1, size * 0.6, h * 0.4);// 가운데 가로획
+    case "F": { // 가는 선으로 그린 F
+      ctx.moveTo(-h * 0.6, -h * 0.9);
+      ctx.lineTo(-h * 0.6, h * 0.9);   // 세로 기둥(왼쪽)
+      ctx.moveTo(-h * 0.6, -h * 0.85);
+      ctx.lineTo(h * 0.6, -h * 0.85);  // 위 가로획
+      ctx.moveTo(-h * 0.6, -h * 0.02);
+      ctx.lineTo(h * 0.35, -h * 0.02); // 가운데 가로획
       break;
     }
     default:
@@ -114,6 +117,25 @@ function starPath(ctx, cx, cy, rOut, rIn, points) {
   ctx.closePath();
 }
 
+// 두께를 무시할 만큼 가는 '선'으로 그리는 모양 (광원이 선이라고 가정)
+const STROKE_SHAPES = new Set(["ga", "F"]);
+
+// 모양을 칠한다: 선 모양은 가는 선으로 stroke, 나머지는 fill.
+// 현재 ctx.fillStyle 색을 그대로 사용한다.
+function paintShape(ctx, type, size) {
+  if (STROKE_SHAPES.has(type)) {
+    ctx.strokeStyle = ctx.fillStyle;
+    ctx.lineWidth = Math.max(1, size * 0.05); // 한 변의 5% → 사실상 두께 없음
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    drawShapePath(ctx, type, size);
+    ctx.stroke();
+  } else {
+    drawShapePath(ctx, type, size);
+    ctx.fill();
+  }
+}
+
 // 채워진 스프라이트 캔버스 생성 (흰색). flip=true면 180° 회전(상하좌우 반전).
 function makeSprite(type, extentPx, flip) {
   const pad = 2;
@@ -129,8 +151,7 @@ function makeSprite(type, extentPx, flip) {
   if (type === "custom") {
     drawCustomSprite(ctx, sz);
   } else {
-    drawShapePath(ctx, type, sz);
-    ctx.fill();
+    paintShape(ctx, type, sz);
   }
   ctx.restore();
   return c;
@@ -158,8 +179,7 @@ function sampleShape(type, extentPx, flip) {
   } else {
     ctx.save();
     ctx.translate(K / 2, K / 2);
-    drawShapePath(ctx, type, K);
-    ctx.fill();
+    paintShape(ctx, type, K);
     ctx.restore();
   }
   const data = ctx.getImageData(0, 0, K, K).data;
@@ -361,9 +381,7 @@ function drawDiagram(st, m) {
   ctx.save();
   ctx.translate(srcX, cy);
   ctx.fillStyle = "#ffd166";
-  drawShapePath(ctx, st.srcShape === "custom" ? "arrow" : st.srcShape, srcH);
-  if (st.srcShape === "custom") { ctx.fill(); }
-  else ctx.fill();
+  paintShape(ctx, st.srcShape === "custom" ? "arrow" : st.srcShape, srcH);
   ctx.restore();
   label(ctx, st.farSource ? "광원(아주 멀리)" : "광원", srcX, cy + H * 0.42 + 16, "#ffd166");
 
@@ -372,8 +390,7 @@ function drawDiagram(st, m) {
   ctx.translate(scrX, cy);
   ctx.scale(-1, -1); // 반전
   ctx.fillStyle = "rgba(110,168,255,0.85)";
-  drawShapePath(ctx, st.srcShape === "custom" ? "arrow" : st.srcShape, imgH);
-  ctx.fill();
+  paintShape(ctx, st.srcShape === "custom" ? "arrow" : st.srcShape, imgH);
   ctx.restore();
   label(ctx, "상(거꾸로)", scrX, cy - H * 0.42 - 8, "#6ea8ff");
 
