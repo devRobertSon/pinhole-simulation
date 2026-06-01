@@ -79,6 +79,29 @@ html, body {
   font-variant-numeric: tabular-nums;
   font-size: 0.82rem;
 }
+.valwrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.num {
+  width: 64px;
+  padding: 3px 6px;
+  background: var(--panel-2);
+  color: var(--accent-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.num:focus { outline: none; border-color: var(--accent); }
+.num:disabled { opacity: 0.5; }
+/* 숫자 입력 스피너 숨김 (선택) */
+.num::-webkit-outer-spin-button,
+.num::-webkit-inner-spin-button { margin: 0; }
 input[type="range"] {
   width: 100%;
   accent-color: var(--accent);

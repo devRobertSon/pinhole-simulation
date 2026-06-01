@@ -22,7 +22,9 @@
       <h2>조절판</h2>
 
       <div class="control">
-        <label for="do">광원–구멍 거리 <span class="badge" id="doVal">50 cm</span></label>
+        <label for="do">광원–구멍 거리
+          <span class="valwrap"><input type="number" id="doNum" class="num" min="5" max="500" step="1" value="50" /> cm</span>
+        </label>
         <input type="range" id="do" min="5" max="500" step="1" value="50" />
         <label class="checkrow">
           <input type="checkbox" id="farSource" />
@@ -31,17 +33,23 @@
       </div>
 
       <div class="control">
-        <label for="di">구멍–스크린 거리 <span class="badge" id="diVal">50 cm</span></label>
+        <label for="di">구멍–스크린 거리
+          <span class="valwrap"><input type="number" id="diNum" class="num" min="5" max="300" step="1" value="50" /> cm</span>
+        </label>
         <input type="range" id="di" min="5" max="300" step="1" value="50" />
       </div>
 
       <div class="control">
-        <label for="hole">구멍 크기(지름/한 변) <span class="badge" id="holeVal">0.5 cm</span></label>
+        <label for="hole">구멍 크기(지름/한 변)
+          <span class="valwrap"><input type="number" id="holeNum" class="num" min="0.1" max="10" step="0.1" value="0.5" /> cm</span>
+        </label>
         <input type="range" id="hole" min="0.1" max="10" step="0.1" value="0.5" />
       </div>
 
       <div class="control">
-        <label for="srcSize">광원 크기 <span class="badge" id="srcSizeVal">10 cm</span></label>
+        <label for="srcSize">광원 크기
+          <span class="valwrap"><input type="number" id="srcSizeNum" class="num" min="1" max="40" step="0.5" value="10" /> cm</span>
+        </label>
         <input type="range" id="srcSize" min="1" max="40" step="0.5" value="10" />
       </div>
 

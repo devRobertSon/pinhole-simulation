@@ -21,7 +21,7 @@ const els = {
   do: $("do"), di: $("di"), hole: $("hole"), srcSize: $("srcSize"),
   srcShape: $("srcShape"), holeShape: $("holeShape"),
   farSource: $("farSource"), showGrid: $("showGrid"),
-  doVal: $("doVal"), diVal: $("diVal"), holeVal: $("holeVal"), srcSizeVal: $("srcSizeVal"),
+  doNum: $("doNum"), diNum: $("diNum"), holeNum: $("holeNum"), srcSizeNum: $("srcSizeNum"),
   diagram: $("diagram"), screen: $("screen"), readout: $("readout"),
   drawWrap: $("drawWrap"), drawPad: $("drawPad"), clearDraw: $("clearDraw"),
 };
@@ -427,12 +427,30 @@ function dimLine(ctx, x0, x1, y, text) {
 /* =====================================================================
  * 입력 처리
  * ===================================================================== */
+// 슬라이더 ↔ 숫자 입력 짝
+const PAIRS = [
+  ["do", "doNum"],
+  ["di", "diNum"],
+  ["hole", "holeNum"],
+  ["srcSize", "srcSizeNum"],
+];
+
+// 숫자 입력값을 min/max로 보정해 슬라이더에 반영
+function commitNumber(rangeKey, numKey) {
+  const r = els[rangeKey], n = els[numKey];
+  let v = parseFloat(n.value);
+  if (isNaN(v)) return; // 입력 중(빈 칸 등)이면 무시
+  const min = parseFloat(r.min), max = parseFloat(r.max);
+  v = Math.min(max, Math.max(min, v));
+  r.value = v;
+}
+
+// 슬라이더 값을 숫자 입력에 반영 (포커스 중인 칸은 건드리지 않음)
 function syncLabels() {
-  els.doVal.textContent = els.farSource.checked ? "∞ (매우 멀리)" : els.do.value + " cm";
-  els.diVal.textContent = els.di.value + " cm";
-  els.holeVal.textContent = parseFloat(els.hole.value).toFixed(1) + " cm";
-  els.srcSizeVal.textContent = parseFloat(els.srcSize.value).toFixed(1) + " cm";
-  els.do.disabled = els.farSource.checked;
+  for (const [rk, nk] of PAIRS) {
+    if (document.activeElement !== els[nk]) els[nk].value = els[rk].value;
+  }
+  els.do.disabled = els.doNum.disabled = els.farSource.checked;
 }
 
 let raf = null;
@@ -445,6 +463,16 @@ function schedule() {
 ["do", "di", "hole", "srcSize", "srcShape", "holeShape", "farSource", "showGrid"].forEach((k) => {
   els[k].addEventListener("input", schedule);
   els[k].addEventListener("change", schedule);
+});
+
+// 직접 숫자 입력: 입력 중에는 슬라이더에 반영해 렌더, 칸을 벗어나면 범위로 보정해 표시
+PAIRS.forEach(([rk, nk]) => {
+  els[nk].addEventListener("input", () => { commitNumber(rk, nk); schedule(); });
+  els[nk].addEventListener("change", () => {
+    commitNumber(rk, nk);
+    els[nk].value = els[rk].value; // 보정된 값으로 표시 갱신
+    schedule();
+  });
 });
 
 // 광원 모양 = 직접 그리기일 때 그리기 패드 표시
